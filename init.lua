@@ -57,7 +57,15 @@ function better_fences.register_fence(...)
     return default.register_fence(...)
 end
 
-function better_fences.on_rightclick(pos, node, player)
+function better_fences.on_rightclick(pos, node, player, itemstack, pointed_thing)
+    local item_name = itemstack and itemstack:get_name()
+    if core.get_item_group(item_name, "sign") ~= 0 or core.get_item_group(item_name, "better_fences") ~= 0 then
+        local item_def = core.registered_items[item_name]
+        if item_def.type == "node" then
+            return core.item_place_node(itemstack, player, pointed_thing)
+        end
+        return
+    end
     local name = player:get_player_name()
     if core.is_protected(pos, name) then
         core.record_protection_violation(pos, name)
