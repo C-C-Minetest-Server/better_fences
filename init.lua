@@ -57,25 +57,25 @@ function better_fences.register_fence(...)
     return default.register_fence(...)
 end
 
+function better_fences.on_rightclick(pos, node, player)
+    local name = player:get_player_name()
+    if core.is_protected(pos, name) then
+        core.record_protection_violation(pos, name)
+        return
+    end
+
+    local def = core.registered_nodes[node.name]
+    if not (def and def.groups and (def.groups.better_fences or 0) > 0) then
+        return
+    end
+
+    local newnodename = def.groups.better_fences == 2 and def._regular_fence or def._end_fence
+    node.name = newnodename
+    core.swap_node(pos, node)
+end
+
 core.register_on_mods_loaded(function()
     local additional_connected = better_fences.additional_connected
-
-    local function on_rightclick(pos, node, player)
-        local name = player:get_player_name()
-        if core.is_protected(pos, name) then
-            core.record_protection_violation(pos, name)
-            return
-        end
-
-        local def = core.registered_nodes[node.name]
-        if not (def and def.groups and (def.groups.better_fences or 0) > 0) then
-            return
-        end
-
-        local newnodename = def.groups.better_fences == 2 and def._regular_fence or def._end_fence
-        node.name = newnodename
-        core.swap_node(pos, node)
-    end
 
     local function register_end_node(old_name)
         local old_def = core.registered_nodes[old_name]
@@ -86,7 +86,7 @@ core.register_on_mods_loaded(function()
             new_def.connects_to[#new_def.connects_to + 1] = connected
         end
 
-        new_def.on_rightclick = on_rightclick
+        new_def.on_rightclick = better_fences.on_rightclick
         new_def.on_construct = better_fences.check_position
         new_def.after_destruct = better_fences.check_position
 
@@ -107,7 +107,7 @@ core.register_on_mods_loaded(function()
         old_groups.better_fences = 1
 
         core.override_item(old_name, {
-            on_rightclick = on_rightclick,
+            on_rightclick = better_fences.on_rightclick,
             on_construct = better_fences.check_position,
             after_destruct = better_fences.check_position,
             groups = old_groups,
